@@ -1,5 +1,5 @@
 use rand::prelude::*;
-use std::io;
+use std::fs;
 
 fn random_ics<const N: usize>(k: usize) -> [usize; N]{
     let mut rng = thread_rng();
@@ -32,8 +32,17 @@ fn main() {
     series[0] = random_ics(K);
     println!("{:?}", series[0]);
 
+    let write_path = "../../target/series.csv";
+    let mut write_content: String = "".to_owned();
+
     for t in 0..T-1 {
         for i in 0..N {
+            
+            if  i != 0 {
+                write_content.push_str(&",");
+            } 
+            write_content.push_str(&series[t][i].to_string());
+            
             applied_rule = 0;
             // find which rule applies by calculating index (where in the order of increasing base-K the number is formed by the neighbourhood)
             for j in 0..R {
@@ -50,12 +59,10 @@ fn main() {
             }
             series[t+1][i] = rules[applied_rule];
         }
+        write_content.push_str(&"\n");
     }
 
     // IO time
-    
-    let mut wtr = csv::Writer::from_writer(io::stdout());
-
-
+    fs::write(write_path, write_content).expect("Unable to write file...");
 }
 
