@@ -29,7 +29,8 @@ fn random_rule_no_dead<const RULE_NUM: usize>(k: usize) -> [u8; RULE_NUM] {
 }
 
 fn get_rule_with_bjs<const RULE_NUM: usize, const R: usize, const OPT_NUM: usize, const K: usize>(bjs: [f32; OPT_NUM]) -> [u8; RULE_NUM] {
-    // helpful hint: for fractional b's, e.g. 1/3, do (1u8 as f32)/3.
+    // if invalid bjs were given, they will be rounded to valid ones!
+
     let mut num_zeros = [0usize; RULE_NUM]; // can save time by making this global or passed
     let mut denoms = [0u8; OPT_NUM]; // total num of rules with [index] zeros
     let mut picked_inds = [0u8; RULE_NUM];
@@ -50,7 +51,7 @@ fn get_rule_with_bjs<const RULE_NUM: usize, const R: usize, const OPT_NUM: usize
     }
 
     for j in 0..OPT_NUM {
-        max_counts[j] = (bjs[j] * denoms[j]).round() as u8;
+        max_counts[j] = (bjs[j] * denoms[j]).round() as u8; // THE ROUNDING
     }
 
     for j in 0..OPT_NUM {
