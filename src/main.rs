@@ -12,20 +12,55 @@ fn random_ics<const N: usize>(k: usize) -> [u8; N] {
 
 fn random_rule<const RULE_NUM: usize>(k: usize) -> [u8; RULE_NUM] {
     let mut rng = thread_rng();
-    let mut arr = [0u8; RULE_NUM];
-    for item in arr.iter_mut() {
-        *item = rng.gen_range(0..k) as u8;
+    let mut rules = [0u8; RULE_NUM];
+    for rule in rules.iter_mut() {
+        *rule = rng.gen_range(0..k) as u8;
     }
-    arr
+    rules
 }
 
 fn random_rule_no_dead<const RULE_NUM: usize>(k: usize) -> [u8; RULE_NUM] {
     let mut rng = thread_rng();
-    let mut arr = [0u8; RULE_NUM];
-    for item in arr.iter_mut() {
-        *item = rng.gen_range(1..k) as u8;
+    let mut rules = [0u8; RULE_NUM];
+    for rule in rules.iter_mut() {
+        *rule = rng.gen_range(1..k) as u8;
     }
-    arr
+    rules
+}
+
+fn get_rule_with_bjs<const RULE_NUM: usize, const R: usize, const OPT_NUM: usize, const K: usize>(bjs: [f32; OPT_NUM]) -> [u8; RULE_NUM] {
+    // helpful hint: for fractional b's, e.g. 1/3, do (1u8 as f32)/3.
+    let mut num_zeros = [0usize; RULE_NUM]; // can save time by making this global or passed
+    let mut denoms = [0u8; OPT_NUM]; // total num of rules with [index] zeros
+    let mut picked_inds = [0u8; RULE_NUM];
+    let mut max_counts = [0u8; OPT_NUM];
+    let mut rules = [0u8; RULE_NUM];
+
+    // converting bjs back to counts
+    for j in 0..R {
+        for i in 0..RULE_NUM {
+            if i%(K.pow(j as u32 + 1)) < K.pow(j as u32) {
+                num_zeros[i] += 1;
+            }
+        }
+    }
+
+    for i in 0..RULE_NUM {
+        denoms[num_zeros[i]] += 1;
+    }
+
+    for j in 0..OPT_NUM {
+        max_counts[j] = (bjs[j] * denoms[j]).round() as u8;
+    }
+
+    for j in 0..OPT_NUM {
+        // while count < max_counts[j]
+            // randomly pick an index with j zeros that isn't in picked_inds
+            // make the rule assign to a random live state
+            // increment count
+    }
+
+    rules
 }
 
 fn get_nu<const R: usize, const OPT_NUM: usize>(bjs: [f32; OPT_NUM]) -> f32 {
@@ -35,6 +70,7 @@ fn get_nu<const R: usize, const OPT_NUM: usize>(bjs: [f32; OPT_NUM]) -> f32 {
         // nu += 
         // urgh it's defined implicitly... I hate math
     }
+    0f32
 }
 
 fn get_rule_bjs<const RULE_NUM: usize, const R: usize, const OPT_NUM: usize, const K: usize>(rules: &[u8; RULE_NUM]) -> [f32; OPT_NUM] {
@@ -43,30 +79,30 @@ fn get_rule_bjs<const RULE_NUM: usize, const R: usize, const OPT_NUM: usize, con
     // OPT_NUM MUST be R+1. For eg. R=3, can have 0, 1, 2, or 3 zeros: 4 options
     let mut bjs = [0f32; OPT_NUM];
     let mut num_zeros = [0usize; RULE_NUM]; // get num zeros at each index analytically?
-    let mut denoms = [0u32; OPT_NUM]; // total num of rules with [index] zeros
+    let mut denoms = [0u8; OPT_NUM]; // total num of rules with [index] zeros
 
-    // getiing num_zeros at each index
-    for i in 0..R {
-        for j in 0..RULE_NUM {
-            if j%(K.pow(i as u32 + 1)) < K.pow(i as u32) {
-                num_zeros[j] += 1;
+    // getting num_zeros at each index
+    for j in 0..R {
+        for i in 0..RULE_NUM {
+            if i%(K.pow(j as u32 + 1)) < K.pow(j as u32) {
+                num_zeros[i] += 1;
             }
         }
     }
    
     // getting denoms
-    for j in 0..RULE_NUM {
-        denoms[num_zeros[j]] += 1;
+    for i in 0..RULE_NUM {
+        denoms[num_zeros[i]] += 1;
     }
 
-    for j in 0..RULE_NUM {
-        if rules[j] == 0 {
-            bjs[num_zeros[j]] += 1.;
+    for i in 0..RULE_NUM {
+        if rules[i] == 0 {
+            bjs[num_zeros[i]] += 1.;
         }
     }
 
-    for i in 0..R+1 {
-        bjs[i] /= denoms[i] as f32;
+    for j in 0..OPT_NUM {
+        bjs[j] /= denoms[j] as f32;
     }
     bjs
 }
@@ -161,7 +197,7 @@ fn main() {
     const RULE_NUM: usize = 8; // MUST BE k^r. Easier to use a calculator than get this to work in a low-level language
 
     
-    let mut rules = [0u8, 1u8, 1u8, 1u8, 1u8, 0u8, 0u8, 0u8];
+    let mut rules = [0u8, 1u8, 0u8, 1u8, 1u8, 0u8, 0u8, 0u8];
     let mut ics = [0u8; N];
     ics[N/2] = 1;
     let write_path = "../../target/series.csv";
@@ -174,5 +210,7 @@ fn main() {
 
     //nu_mfs = (0..100 as f32)/100.;
     //println!("{}", nu_mfs);
+
+    println!("{}", ((2u8 as f32)/3.).round() as u8);
 }
 
